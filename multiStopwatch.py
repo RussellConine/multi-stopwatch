@@ -6,18 +6,27 @@ import csv
 
 class GUI:
 	def __init__(self, mainWin):
-		""" Create GUI labels, buttons, and boxes
+		""" 
+			Create GUI labels, buttons, and boxes
 		"""
 		frame = Frame(mainWin)
 		frame.pack()
 		mainWin.title('Timer')
 
-		### Init variables ###
-		self.curTime = StringVar()
-		self.curTime.set('0:00:00')
-		self.elapsed = datetime.timedelta(0)
+		################# Init variables #################
+		# to change number of timers, change timerCount
+		timerCount = 5
 
-		### Create top row of labels ###
+		self.elapsed = [datetime.timedelta(0)]*timerCount
+		buttonText = ['Start', 'Pause', 'Stop', 'Save']
+		self.stationVarList = []								
+		self.IDVarList = []
+		self.timeVarList = []
+		self.buttons = {}
+		self.now = [datetime.datetime.now()]*timerCount
+
+
+		#################Create top row of labels #################
 		self.label1 = Label(frame, text = 'Start')
 		self.label1.grid(row=0, column = 0)
 
@@ -39,69 +48,94 @@ class GUI:
 		self.label1 = Label(frame, text = 'Save')
 		self.label1.grid(row=0, column = 6)
 
-		### Create buttons, entry boxes, and counter ###
-		self.B1 = Button(frame, text = 'Start', command=self.start)
-		self.B1.grid(row=1,column=0)
 
-		self.E1 = Entry(frame)
-		self.E1.grid(row=1,column=1)
+		################# Create buttons, entry boxes, and counter #################
+		for i in range(timerCount):
+			'''
+				The buttons are stored in a dictionary of lists where each list is a row of buttons. This allows 
+				each button to function on its row of the timers.
+				- buttons[i] is the row (list) of buttons for timer row i
+				- buttons[i][0] is the start button widget list for timer row i
+				- buttons[i][0][0] is the start button widget object that accesses the
+			'''
 
-		self.E2 = Entry(frame)
-		self.E2.grid(row=1,column=2)
+			self.buttons[i] = [[], [], [], []]
 
-		self.L1 = Label(frame, textvariable = self.curTime)
-		self.L1.grid(row=1,column=3)
-		
-		self.B2 = Button(frame, text = 'Pause', state = DISABLED, command=self.pause)
-		self.B2.grid(row=1,column=4)
+			self.buttons[i][0] = [Button(frame,text=buttonText[0], command = lambda i=i: self.start(i))]
+			self.buttons[i][0][0].grid(row=i+1,column=0)
 
-		self.B3 = Button(frame,text = 'Stop', state = DISABLED, command=self.stop)
-		self.B3.grid(row=1,column=5)
+			self.stationVarList.append(StringVar())
+			entry=Entry(frame, textvariable = self.stationVarList[i])
+			entry.grid(row=i+1,column=1)
 
-		self.B4 = Button(frame, text = 'Save', state = DISABLED, command=self.save)
-		self.B4.grid(row=1,column=6)
+			self.IDVarList.append(StringVar())
+			entry=Entry(frame, textvariable = self.IDVarList[i])
+			entry.grid(row=i+1,column=2)
 
-	def start(self):
-		""" Start stopwatch. Called by pressing Start button.
+			self.timeVarList.append(StringVar())
+			L1 = Label(frame, textvariable = self.timeVarList[i])
+			self.timeVarList[i].set('0:00:00')
+			L1.grid(row=i+1,column=3)
+
+			self.buttons[i][1] = [Button(frame,text=buttonText[1], state = DISABLED, command = lambda i=i: self.pause(i))]
+			self.buttons[i][1][0].grid(row=i+1,column=4)
+			
+			self.buttons[i][2] = [Button(frame,text=buttonText[2], state = DISABLED, command = lambda i=i: self.stop(i))]
+			self.buttons[i][2][0].grid(row=i+1,column=5)
+
+			self.buttons[i][3] = [Button(frame,text=buttonText[3], state = DISABLED, command = lambda i=i: self.save(i))]
+			self.buttons[i][3][0].grid(row=i+1,column=6)
+
+			
+	def start(self, i):
+		""" 
+			Start stopwatch. Called by pressing Start button.
 			Stopwatch can be paused or stopped after starting.
 		"""
-		self.curTime.set('-:--:--')
-		self.now = datetime.datetime.now()
-		self.B1.config(state = DISABLED)
-		self.B2.config(state = NORMAL)
-		self.B3.config(state = NORMAL)
+		self.timeVarList[i].set('-:--:--')
+		self.now[i] = datetime.datetime.now()
+		self.buttons[i][0][0].config(state = DISABLED)
+		self.buttons[i][1][0].config(state = NORMAL)
+		self.buttons[i][2][0].config(state = NORMAL)
 
-	def pause(self):
-		""" Pause stopwatch. Saves time elapsed as timedelta variable self.elapsed.
+
+	def pause(self, i):
+		""" 
+			Pause stopwatch. Saves time elapsed as timedelta variable self.elapsed.
 			Only save button is enabled after pausing stopwatch.
 		"""
-		self.elapsed = datetime.datetime.now()-self.now + self.elapsed
-		self.curTime.set(str(self.elapsed)[:7])
-		self.B1.config(state = NORMAL)
-		self.B2.config(state = DISABLED)
-		self.B3.config(state = DISABLED)
-		self.B4.config(state = DISABLED)
+		self.elapsed[i] = datetime.datetime.now()-self.now[i] + self.elapsed[i]
+		self.timeVarList[i].set(str(self.elapsed[i])[:7])
+
+		self.buttons[i][0][0].config(state= NORMAL)
+		self.buttons[i][1][0].config(state= DISABLED)
+		self.buttons[i][2][0].config(state= DISABLED)
+		self.buttons[i][3][0].config(state= DISABLED)
 
 
-	def stop(self):
-		""" Stop stopwatch. Saves time elapsed. Sets self.startTime=0.
-			Time can be 
+	def stop(self, i):
+		""" 
+			Stop stopwatch. Saves time elapsed. Sets self.startTime=0.
 		"""
-		self.elapsed = datetime.datetime.now()-self.now + self.elapsed
-		self.curTime.set(str(self.elapsed)[:7])
-		self.startTime = datetime.timedelta(0)
-		self.B1.config(state = DISABLED)
-		self.B2.config(state = DISABLED)
-		self.B3.config(text = 'Reset', command= self.reset)
-		self.B4.config(state = NORMAL)
+		self.elapsed[i] = datetime.datetime.now()-self.now[i] + self.elapsed[i]
+		print(self.elapsed[i])
+		self.timeVarList[i].set(str(self.elapsed[i])[:7])
 
-	def save(self):
-		""" Appends Job Station, Job ID, and Time as CSV file. If file doesn't already 
+		self.buttons[i][0][0].config(state = DISABLED)
+		self.buttons[i][1][0].config(state= DISABLED)
+		self.buttons[i][2][0].config(state= NORMAL, text = 'Reset', command = lambda i=i: self.reset(i))
+		self.buttons[i][3][0].config(state= NORMAL)
+
+
+	def save(self, i):
+		""" 
+			Appends Job Station, Job ID, and Time as CSV file. If file doesn't already 
 			exist, creates file and headers.
 		"""
 		try:
 			f = open('outfile.csv', 'r')
 			f.close()
+
 		except:
 			f = open('outfile.csv', 'w', newline = '')
 			header = ['Job Station', 'Job ID', 'Time']
@@ -111,26 +145,25 @@ class GUI:
 
 		f = open('outfile.csv', 'a', newline = '')
 		csvWriter = csv.writer(f)
-		outRow = [self.E1.get(), self.E2.get(), str(self.elapsed)[:7]]
+		outRow = [self.stationVarList[i].get(), self.IDVarList[i].get(), str(self.elapsed[i])[:7]]
 		csvWriter.writerow(outRow)
 		f.close()
-		self.reset()
+		self.reset(i)
 
-	def reset(self):
-		self.curTime.set('0:00:00')
-		self.elapsed = datetime.timedelta(0)
-		self.E1.delete(0, END)
-		self.E2.delete(0, END)
-		self.initial = True
-		self.B1.config(state = NORMAL)
-		self.B3.config(text = 'Stop', state = DISABLED, command = self.stop)
-		self.B4.config(state = DISABLED)
 
-	
-		
-	# def updateWindow(self):
-	# 	self.L1.config(text = self.curTime)
-	
+	def reset(self, i):
+		""" 
+			Resets timer to 0. Resets stop button to stop (from reset). Resets button to 
+			initial states.
+		"""
+		self.timeVarList[i].set('0:00:00')
+		self.elapsed[i] = datetime.timedelta(0)
+		self.stationVarList[i].set('')
+		self.IDVarList[i].set('')
+		self.buttons[i][0][0].config(state= NORMAL)
+		self.buttons[i][2][0].config(text = 'Stop', state = DISABLED, command = lambda i=i: self.stop(i))
+		self.buttons[i][3][0].config(state = DISABLED)
+
 
 root = Tk()
 window = GUI(root)
